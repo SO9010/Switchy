@@ -1,0 +1,356 @@
+import { Button, VerticalBox, Switch, Slider, GridBox, HorizontalBox } from "std-widgets.slint";
+// Animations which require functions dont work which is annoying
+
+component BasicSlider inherits Rectangle {
+    in-out property<float> maximum: 3800;
+    in-out property<float> minimum: 0;
+    in-out property<int> value;
+    in-out property<int> original-value;
+    in-out property<bool> enabled;
+    in property<color> right-color: self.enabled ? #ffd058: #6f6f6f ;
+    in property<color> left-color: self.enabled ? #f3ffff : #fff;
+
+    callback moved();
+    callback released();
+
+
+    min-height: 100px;
+    min-width: 24px;
+    horizontal-stretch: 0;
+    vertical-stretch: 1;
+    y: enabled ? root.height * 2 : 0;
+    animate y {
+         easing: ease-in-out;
+    }
+    border-top-left-radius: root.width/2;
+    border-top-right-radius: root.width/2;    background: @linear-gradient(180deg, left-color 0%, right-color 100%);
+    border-width: 1px;
+    border-color: #999;
+
+    handle := Rectangle {
+        width: touch.pressed ? self.height *1.5 : self.height;
+        animate width {
+            duration: 150ms;
+            easing: ease-out-bounce;
+        }
+        height:  parent.width;
+        border-width: 3px;
+        border-radius: 15px;
+        background: touch.pressed ? #a38787: touch.has-hover ? #5b5b5b : #313131;
+        animate background {
+            duration: 150ms;
+        }    
+        border-color: self.background.darker(30%);
+        y: (root.height - handle.height) * (1.0 - (root.value - root.minimum) / (root.maximum - root.minimum));    }
+    
+    touch := TouchArea {
+        property <float> pressed-value;
+        
+        pointer-event(event) => {
+            if (event.button == PointerEventButton.left && event.kind == PointerEventKind.down) {
+                self.pressed-value = root.value;
+            }
+            if (event.button == PointerEventButton.left && event.kind == PointerEventKind.up) {
+                if (root.value != root.original-value) {
+                    root.moved();
+                    root.original-value = root.value;
+                }            
+            }
+        }
+        
+        moved => {
+            if (self.enabled) {
+                root.value = max(root.minimum, min(root.maximum,
+                self.pressed-value - (touch.mouse-y - self.pressed-y) * (root.maximum - root.minimum) / (root.height - handle.height)));
+            }
+        }
+    }
+}
+
+export component OnOff inherits Path {
+    width: 100px;
+    height: 100px;
+    commands: "M24.3301 26.7402c-.3008 0-.5371-.2363-.5371-.5371V5.5352c0-.2793.2363-.5157.5371-.5157.2793 0 .5156.2364.5156.5157V26.2031c0 .3008-.2363.5371-.5156.5371Zm0 20.8828c-11.1934 0-20.3242-9.1523-20.3242-20.3457 0-6.3808 2.9648-12.1386 7.6269-15.8339.6231-.4942 1.3106.3652.709.8379-4.4043 3.4375-7.2402 8.8945-7.2402 14.996 0 10.6133 8.6152 19.2286 19.2285 19.2286 10.5918 0 19.2285-8.6153 19.2285-19.2286 0-6.1015-2.8789-11.5371-7.2402-14.9961-.6016-.4726.0644-1.332.7089-.8378 4.6407 3.7168 7.627 9.4531 7.627 15.8339 0 11.1934-9.1523 20.3457-20.3242 20.3457Z";
+    stroke: black;
+    fill: #000000;
+    stroke-width: 5px;
+}
+
+
+component BrightnessSlider inherits Rectangle {
+    in-out property<float> maximum: 3800;
+    in-out property<float> minimum: 0;
+    in-out property<int> value;
+    in-out property<int> original-value;
+    in-out property<bool> enabled;
+    in-out property<bool> clicks;
+    in property<color> right-color: self.enabled ? #ffd058: #6f6f6f ;
+    in property<color> left-color: self.enabled ? #f3ffff : #fff;
+
+    callback moved();
+    callback released();
+    callback toggle();
+    
+    clicks: false;
+    min-height: 100px;
+    min-width: 24px;
+    horizontal-stretch: 0;
+    vertical-stretch: 1;
+
+    border-top-left-radius: root.width/3.5;
+    border-top-right-radius: root.width/3.5;    
+    background: @linear-gradient(180deg, left-color 0%, right-color 100%);
+    border-width: 1px;
+    border-color: #999;
+
+    handle := Rectangle {
+        OnOff {
+            width: parent.width - 25px;
+            height: parent.width - 25px;
+        }
+        width: touch.pressed ? self.height *1.5 : self.height;
+        animate width {
+            duration: 150ms;
+            easing: ease-out-bounce;
+        }
+        height: parent.width - 10px;
+        border-width: 3px;
+        border-radius: self.width / 3.5;
+        background: touch.pressed ? #a38787: touch.has-hover ? #5b5b5b : #313131;
+        animate background {
+            duration: 150ms;
+        }
+        border-color: self.background.darker(30%);
+        y: enabled ? ((root.height - handle.height) * (1.0 - (root.value - root.minimum) / (root.maximum - root.minimum))) : 5px;
+    }
+    
+    touch := TouchArea {
+        property <float> pressed-value;
+        property <bool> click: false;
+
+        double-clicked => {
+            if (root.enabled) {
+                root.toggle();
+                self.click = true;
+            }
+            else {
+                self.click = false;
+            }
+        }  
+        
+        pointer-event(event) => {
+            if (root.enabled && event.button == PointerEventButton.left && event.kind == PointerEventKind.down) {
+                self.pressed-value = root.value;
+            }
+            if (event.button == PointerEventButton.left && event.kind == PointerEventKind.up) {
+                if (root.enabled && root.value != root.original-value && !(root.value - 2 < root.original-value  && root.value + 2 > root.original-value)) {
+                    root.moved();
+                    root.original-value = root.value;
+                }
+                if (!root.enabled) {
+                    if (!self.click) {
+                        toggle();
+                    }
+                    self.click = false;
+                }
+            }
+        }
+
+       
+        
+        moved => {
+            if (self.enabled) {
+                root.value = max(root.minimum, min(root.maximum,
+                self.pressed-value - (touch.mouse-y - self.pressed-y) * (root.maximum - root.minimum) / (root.height - handle.height)));
+            }
+        }
+    }
+}
+
+component ColorSlider inherits Rectangle {
+    in-out property<float> maximum: 100;
+    in-out property<float> minimum: 0;
+    in-out property<float> value;
+    in-out property<bool> enabled;
+    in property<color> right-color: self.enabled ? #f3ffff : #fff;
+    in property<color> left-color: self.enabled ? #ffd058: #6f6f6f ;
+
+    in-out property <color> selected-color;
+
+    callback moved();
+    callback released();
+    min-height: 100px;
+    min-width: 24px;
+    horizontal-stretch: 0;
+    vertical-stretch: 1;
+
+    animate y { duration: 100ms; easing: ease-out-bounce; }
+
+    border-top-left-radius: root.width/2;
+    border-top-right-radius: root.width/2;    
+    background: @linear-gradient(180deg, 
+        #ff0000 0%,    // Red
+        #ff7f00 12.5%,   // Orange
+        #ffff00 25%,   // Yellow
+        #00ff00 37.5%,   // Green
+        #00ffff 50%,   // Cyan
+        #0000ff 62.5%,   // Blue
+        #ff00ff 75%,   // Magenta
+        #ff0000 100%,    // Red again
+    );
+    border-width: 1px;
+    border-color: #999;
+
+    handle := Rectangle {
+        width: touch.pressed ? self.height *1.5 : self.height;
+        animate width {
+            duration: 150ms;
+            easing: ease-out-bounce;
+        }
+        height: parent.width;
+        border-width: 3px;
+        border-radius: 15px;
+        background: touch.pressed ? root.selected-color: touch.has-hover ? #5b5b5b : #313131;
+        animate background {
+            duration: 150ms;
+        }
+        border-color: self.background.darker(30%);
+        y: (root.height - handle.height) * (root.value - root.minimum)/(root.maximum - root.minimum);  // Changed from x to y
+    }
+    
+    
+    touch := TouchArea {
+        property <float> pressed-value;
+        pointer-event(event) => {
+            if (event.button == PointerEventButton.left && event.kind == PointerEventKind.down) {
+                self.pressed-value = root.value;
+            }
+            if (event.button == PointerEventButton.left && event.kind == PointerEventKind.up) {
+                root.moved();
+            }
+        }
+        
+        moved => {
+            if (self.enabled) {
+                root.value = max(root.minimum, min(root.maximum,
+                    self.pressed-value + (touch.mouse-y - touch.pressed-y) * (root.maximum - root.minimum) / (root.height - handle.height)));
+                    
+                if (root.value <= 6.25) {
+                    root.selected-color = #ff0000;
+                } else if (root.value <= 12.5) {
+                    root.selected-color = #ff4000;
+                } else if (root.value <= 18.75) {
+                    root.selected-color = #ff7f00;
+                } else if (root.value <= 25) {
+                    root.selected-color = #ffbf00;
+                } else if (root.value <= 31.25) {
+                    root.selected-color = #ffff00;
+                } else if (root.value <= 37.5) {
+                    root.selected-color = #80ff00;
+                } else if (root.value <= 43.75) {
+                    root.selected-color = #00ff00;
+                } else if (root.value <= 50) {
+                    root.selected-color = #00ff80;
+                } else if (root.value <= 56.25) {
+                    root.selected-color = #00ffff;
+                } else if (root.value <= 62.5) {
+                    root.selected-color = #0080ff;
+                } else if (root.value <= 68.75) {
+                    root.selected-color = #0000ff;
+                } else if (root.value <= 75) {
+                    root.selected-color = #8000ff;
+                } else if (root.value <= 81.25) {
+                    root.selected-color = #ff00ff;
+                } else if (root.value <= 87.5) {
+                    root.selected-color = #ff0080;
+                } else if (root.value <= 93.75) {
+                    root.selected-color = #ff0040;
+                } else {
+                    root.selected-color = #ff0000;
+                }
+            }
+        }
+    }
+}
+
+export component AppWindow inherits Window {
+    background: #ffff;
+    in-out property <bool> light-on: false;
+    in-out property <int> brightness: 5;
+    in-out property <color> color_change: #D9D9D9;
+    in-out property <int> color_warmth: 2700;
+    default-font-family: "Roboto";
+    min-height: 320px;
+    max-height: 320px;
+    min-width: 240px;
+    max-width: 240px;
+    title: "Switchy";
+    callback request-change-brightness-value();
+    callback request-change-warmth-value();
+    callback request-change-color-value();
+    callback request-on-off();
+    callback update-color();
+
+        ColorSlider {
+            moved => {
+                root.request-change-color-value();
+            }
+
+            x: 0px + 15px;
+            y: light-on ? 70px : 320px;
+            animate y { duration: 100ms;}
+            width: 32.5px;
+            height: 250px;
+            drop-shadow-blur: 7px;
+            drop-shadow-color: #00000041;
+            drop-shadow-offset-x: -5px;
+            drop-shadow-offset-y: 5px;
+            enabled: light-on;
+            right-color: #000000;
+            selected-color <=> root.color_change;
+        }
+
+        BrightnessSlider {
+            toggle => {
+                root.request-on-off();
+            }
+            moved => { 
+                root.request-change-brightness-value();
+            }
+
+            x: 120px - ( light-on ?  95px : 125px)/2;
+            animate x { duration: 100ms;}
+            y: light-on ? 20px : 70px;
+            animate y { duration: 100ms;}
+            width: light-on ? 95px : 125px;
+            animate width { duration: 100ms; }
+            height: light-on ? 300px : 250px;
+            enabled: light-on;
+            drop-shadow-blur: 7px;
+            drop-shadow-color: #4e4e4e00;
+            drop-shadow-offset-y: 7.5px;
+            right-color: #2c2c2c;
+            left-color: #ffffff;
+            minimum: 1;
+            maximum: 100;
+            value <=> root.brightness;
+        }
+    
+        BasicSlider {
+            width: 32.5px;
+            height: 250px;
+            drop-shadow-blur: 7px;
+            drop-shadow-color: #00000041;
+            drop-shadow-offset-x: 5px;
+            drop-shadow-offset-y: 5px;
+            enabled: light-on;
+            value <=> root.color_warmth;
+            moved => { 
+                root.request-change-warmth-value();
+            }
+            x: 240px - 32.5px - 15px;
+            y: light-on ? 70px : 320px;
+            animate y { duration: 100ms; easing: ease-in-out; }
+        }
+}
+
