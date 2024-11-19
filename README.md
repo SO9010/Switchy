@@ -3,7 +3,7 @@
 This is a simple program with uses Slint for the UI and allows you to turn on and off your Switchbot light.
 ## About
 
-This project is to allow you to turn on and off your Switchbot light. Currently it only controls the first light, as I can't test for more devices as I only have one. It is resposive and mainly a learning project for me. My end goal is to put this onto an ESP32. I want to still use Slint, this project can then be used as a template for other projects using Slint and an ESP32.
+This project is to allow you to turn on and off your Switchbot light. Currently it only controls the first light, as I can't test for more devices as I only have one. It is resposive and mainly a learning project for me. My end goal is to put this onto an ESP32.
 
 Contributions are more than welcome!
 
